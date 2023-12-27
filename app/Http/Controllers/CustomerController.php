@@ -2,54 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use Illuminate\Http\Response;
+use Crm\Customer\Models\Customer;
+use Crm\Customer\Models\User;
+use Crm\Customer\Requests\CreateCustomer;
+use Crm\Customer\Services\CustomerService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request)
+    private CustomerService $customerService;
+
+    public function __construct(CustomerService $customerService)
     {
-        return Customer::all();
+        $this->customerService = $customerService;
     }
 
-    public function show($id)
+    public function index(Request $request): Collection
     {
-        //$customer = Customer::find($id);
-
-        return Customer::find($id) ?? response()->json(['status' => 'Not Found'], Response::HTTP_NOT_FOUND);;
-    }
-    public function  create(Request $request)
-    {
-
-        $customer = new Customer();
-        $customer->name = $request->get('name');
-        $customer->save();
-        return $request->get('name');
-        return $customer;
+        return $this->customerService->index($request);
     }
 
-    public function  update(Request $request, $id)
+    public function show($customerId)
     {
-        $customer = Customer::find($id);
-        if (! $customer)
-        {
-            return response()->json(['status' => 'Not Found'], Response::HTTP_NOT_FOUND);
-        }
-        $customer->name = $request->get('name');
-        $customer->save();
+        return $this->customerService->show($customerId) ??  response()->json(['status' => 'Not Found'], ResponseAlias::HTTP_NOT_FOUND);
+    }
+    public function  create(CreateCustomer $request): Customer
+    {
 
-        return $customer;
+        return $this->customerService->create($request->get('name'));
     }
 
-    public function  delete(Request $request, $id)
+    public function  update(Request $request, int $id)
     {
-        $customer = Customer::find($id);
-        if (! $customer)
-        {
-            return response()->json(['status' => 'Not Found'], Response::HTTP_NOT_FOUND);
-        }
-        $customer->delete();
-        return response()->json(['status' => 'deleted'], Response::HTTP_OK);
+        return $this->customerService->update($request, $id);
+    }
+
+    public function  delete(Request $request, int $id)
+    {
+        return $this->customerService->delete($request, $id);
     }
 }
